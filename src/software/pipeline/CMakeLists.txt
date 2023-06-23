@@ -130,6 +130,7 @@ if(ALICEVISION_BUILD_SFM)
     SOURCE main_sequentialFeatureMatching.cpp
     FOLDER ${FOLDER_SOFTWARE_PIPELINE}
     LINKS aliceVision_system
+          aliceVision_cmdline
           aliceVision_feature
           aliceVision_multiview
           aliceVision_matchingImageCollection

@@ -1,6 +1,5 @@
 ﻿// This file is part of the AliceVision project.
-// Copyright (c) 2015 AliceVision contributors.
-// Copyright (c) 2012 openMVG contributors.
+// Copyright (c) 2023 AliceVision contributors.
 // This Source Code Form is subject to the terms of the Mozilla Public License,
 // v. 2.0. If a copy of the MPL was not distributed with this file,
 // You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -8,7 +7,7 @@
 #include <aliceVision/sfmData/SfMData.hpp>
 #include <aliceVision/sfmDataIO/sfmDataIO.hpp>
 #include <aliceVision/system/main.hpp>
-#include <aliceVision/system/cmdline.hpp>
+#include <aliceVision/cmdline/cmdline.hpp>
 
 #include <aliceVision/sfm/pipeline/regionsIO.hpp>
 #include <aliceVision/matching/matcherType.hpp>
@@ -27,7 +26,7 @@
 
 // These constants define the current software version.
 // They must be updated when the command line is changed.
-#define ALICEVISION_SOFTWARE_VERSION_MAJOR 2
+#define ALICEVISION_SOFTWARE_VERSION_MAJOR 1
 #define ALICEVISION_SOFTWARE_VERSION_MINOR 0
 
 namespace po = boost::program_options;
