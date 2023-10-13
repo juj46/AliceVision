@@ -10,6 +10,7 @@ set(robustEstimation_files_headers
   IRansacKernel.hpp
   Ransac.hpp 
   ACRansac.hpp
+  NACRansac.hpp
   LORansac.hpp
   ransacTools.hpp
   randSampling.hpp

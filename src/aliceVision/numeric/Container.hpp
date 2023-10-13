@@ -21,6 +21,7 @@ template <> size_t CountElements<Mat2X>(const Mat2X &A);
 template <> size_t CountElements<Mat3X>(const Mat3X &A);
 template <> size_t CountElements<Mat>(const Mat &A);
 template <> size_t CountElements<std::vector<Vec2>>(const std::vector<Vec2> &A);
+template <> size_t CountElements<std::vector<Vec3>>(const std::vector<Vec3> &A);
 
 template <typename TMat>
 size_t ElementSize(const TMat &A)
@@ -33,6 +34,7 @@ template <> size_t ElementSize<Mat2X>(const Mat2X &A);
 template <> size_t ElementSize<Mat3X>(const Mat3X &A);
 template <> size_t ElementSize<Mat>(const Mat &A);
 template <> size_t ElementSize<std::vector<Vec2>>(const std::vector<Vec2> &A);
+template <> size_t ElementSize<std::vector<Vec3>>(const std::vector<Vec3> &A);
 
 template <typename T>
 struct Element;
@@ -85,6 +87,18 @@ struct Element<std::vector<Vec2>>
     }
 };
 
+template <>
+struct Element<std::vector<Vec3>>
+{
+    typedef const Vec3 & const_type;
+    typedef Vec3 & type;
+
+    static  std::vector<Vec3> create(size_t elementSize, size_t count)
+    {
+        return std::vector<Vec3>(count);
+    }
+};
+
 template <typename TMat>
 typename Element<TMat>::const_type getElement(const TMat & A, size_t index)
 {
@@ -103,11 +117,13 @@ template <> typename Element<Mat2X>::const_type getElement<Mat2X>(const Mat2X & 
 template <> typename Element<Mat3X>::const_type getElement<Mat3X>(const Mat3X & A, size_t index);
 template <> typename Element<Mat>::const_type getElement<Mat>(const Mat & A, size_t index);
 template <> typename Element<std::vector<Vec2>>::const_type getElement<std::vector<Vec2>>(const std::vector<Vec2> & A, size_t index);
+template <> typename Element<std::vector<Vec3>>::const_type getElement<std::vector<Vec3>>(const std::vector<Vec3> & A, size_t index);
 
 template <> typename Element<Mat2X>::type getElement<Mat2X>(Mat2X & A, size_t index);
 template <> typename Element<Mat3X>::type getElement<Mat3X>(Mat3X & A, size_t index);
 template <> typename Element<Mat>::type getElement<Mat>(Mat & A, size_t index);
 template <> typename Element<std::vector<Vec2>>::type getElement<std::vector<Vec2>>(std::vector<Vec2> & A, size_t index);
+template <> typename Element<std::vector<Vec3>>::type getElement<std::vector<Vec3>>(std::vector<Vec3> & A, size_t index);
 
 /**
  * @brief It extracts the columns of given indices from the given matrix

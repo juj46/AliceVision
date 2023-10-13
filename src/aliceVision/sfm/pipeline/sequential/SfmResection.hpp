@@ -17,20 +17,47 @@ namespace sfm {
 class SfmResection
 {
 public:
+    SfmResection(size_t maxIterations, double precision) 
+    : _maxIterations(maxIterations),
+    _precision(precision)
+    {
+
+    }
+
     bool processView(
                 const sfmData::SfMData & sfmData,
                 const track::TracksMap & tracks,
                 const track::TracksPerView & map_tracksPerView, 
                 const feature::FeaturesPerView & featuresPerView,
-                const IndexT viewId
+                std::mt19937 &randomNumberGenerator,
+                const IndexT viewId,
+                Eigen::Matrix4d & updatedPose,
+                double & updatedThreshold
             );
+
 private:
     bool internalResection(
-            const std::shared_ptr<camera::IntrinsicBase> & intrinsic,
+            std::shared_ptr<camera::IntrinsicBase> & intrinsic,
+            std::mt19937 &randomNumberGenerator,
             const std::vector<Eigen::Vector3d> & structure,
-            const std::vector<Eigen::Vector2d> & observations
+            const std::vector<Eigen::Vector2d> & observations,
+            const std::vector<feature::EImageDescriberType> & featureTypes,
+            Eigen::Matrix4d & pose,
+            std::vector<size_t> & inliers,
+            double &errorMax
         );
+
+    bool internalRefinement(
+            const std::vector<Eigen::Vector3d> & structure,
+            const std::vector<Eigen::Vector2d> & observations,
+            const std::vector<size_t> & inliers,
+            Eigen::Matrix4d & pose, 
+            std::shared_ptr<camera::IntrinsicBase> & intrinsics
+        );
+
 private:
+    double _precision;
+    size_t _maxIterations;
 };
 
 } // namespace sfm

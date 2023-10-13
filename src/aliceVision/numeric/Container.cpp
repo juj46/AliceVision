@@ -33,6 +33,12 @@ size_t CountElements<std::vector<Vec2>>(const std::vector<Vec2> &A)
 }
 
 template <>
+size_t CountElements<std::vector<Vec3>>(const std::vector<Vec3> &A)
+{
+    return A.size();
+}
+
+template <>
 size_t ElementSize<Mat2X>(const Mat2X &A)
 {
     return 2;
@@ -52,6 +58,12 @@ size_t ElementSize<Mat>(const Mat &A)
 
 template <>
 size_t ElementSize<std::vector<Vec2>>(const std::vector<Vec2> &A)
+{
+    return 2;
+}
+
+template <>
+size_t ElementSize<std::vector<Vec3>>(const std::vector<Vec3> &A)
 {
     return 2;
 }
@@ -102,6 +114,18 @@ Element<std::vector<Vec2>>::const_type getElement<std::vector<Vec2>>(const std::
 
 template <>
 Element<std::vector<Vec2>>::type getElement<std::vector<Vec2>>(std::vector<Vec2> & A, size_t index)
+{
+    return A[index];
+}
+
+template <>
+Element<std::vector<Vec3>>::const_type getElement<std::vector<Vec3>>(const std::vector<Vec3> & A, size_t index)
+{
+    return A[index];
+}
+
+template <>
+Element<std::vector<Vec3>>::type getElement<std::vector<Vec3>>(std::vector<Vec3> & A, size_t index)
 {
     return A[index];
 }
