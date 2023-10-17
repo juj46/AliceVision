@@ -29,7 +29,9 @@ public:
             const track::TracksPerView & tracksPerView, 
             const feature::FeaturesPerView & featuresPerView,
             std::mt19937 &randomNumberGenerator,
-            const std::set<IndexT> viewIds
+            const std::set<IndexT> & viewIds,
+            std::set<IndexT> & evaluatedTracks,
+            std::map<IndexT, sfmData::Landmark> & outputLandmarks
         );
 
 private:
@@ -38,7 +40,8 @@ private:
             const track::Track & track,
             const feature::FeaturesPerView & featuresPerView,
             std::mt19937 &randomNumberGenerator,
-            std::set<IndexT> viewIds
+            const std::set<IndexT> & viewIds,
+            sfmData::Landmark & result
         );  
 
 private:

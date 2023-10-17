@@ -41,10 +41,9 @@ public:
     for (int id = 0; id < observations.size(); id++)
     {
         const Vec2 & obs = _observations[id];
-        const Eigen::Matrix4d & pose = _poses[id];
         std::shared_ptr<camera::IntrinsicBase> camera = _intrinsics[id];
 
-        _lifted.push_back(camera->toUnitSphere(camera->cam2ima(camera->removeDistortion(obs))));
+        _lifted.push_back(camera->toUnitSphere(camera->removeDistortion(camera->ima2cam(obs))));
     }
   }
 
@@ -146,7 +145,14 @@ public:
    */
   double error(std::size_t sample, const ModelT & model) const override
   {
-    Vec2 residual = _intrinsics[sample]->residual(_poses[sample], model.getMatrix(), _observations[sample]);
+    Vec4 X = model.getMatrix();
+    if (std::abs(X(3)) > 1e-16)
+    {
+        X = X / X(3);
+    }
+
+    Vec2 residual = _intrinsics[sample]->residual(_poses[sample], X, _observations[sample]);
+
     return residual.norm();
   }
 
@@ -170,7 +176,7 @@ public:
    */
   void unnormalize(robustEstimation::MatrixModel<Vec4> & model) const override
   {
-
+    
   }
 
   /**
@@ -226,9 +232,13 @@ bool SfmTriangulation::process(
             const track::TracksPerView & tracksPerView, 
             const feature::FeaturesPerView & featuresPerView,
             std::mt19937 &randomNumberGenerator,
-            const std::set<IndexT> viewIds
+            const std::set<IndexT> &viewIds,
+            std::set<IndexT> & evaluatedTracks,
+            std::map<IndexT, sfmData::Landmark> & outputLandmarks
         )
 {
+    evaluatedTracks.clear();
+
     // Get all tracks id which are visible in views
     std::set<IndexT> viewTracks;
     track::getTracksInImagesFast(viewIds, tracksPerView, viewTracks);
@@ -240,7 +250,7 @@ bool SfmTriangulation::process(
     allInterestingViews.insert(viewIds.begin(), viewIds.end());
     allInterestingViews.insert(validViews.begin(), validViews.end());
 
-#pragma omp parallel for
+//#pragma omp parallel for
     for(int pos = 0; pos < viewTracks.size(); pos++)
     {
         std::set<IndexT>::const_iterator it = viewTracks.begin();
@@ -265,9 +275,19 @@ bool SfmTriangulation::process(
             continue;
         }
 
-        if (!processTrack(sfmData, track, featuresPerView, randomNumberGenerator, trackViewsFiltered))
+        evaluatedTracks.insert(trackId);
+
+        
+
+        sfmData::Landmark result;
+        if (!processTrack(sfmData, track, featuresPerView, randomNumberGenerator, trackViewsFiltered, result))
         {
             continue;
+        }
+
+        #pragma omp critical
+        {
+            outputLandmarks[trackId] = result;
         }
     }
 
@@ -279,7 +299,8 @@ bool SfmTriangulation::processTrack(
             const track::Track & track,
             const feature::FeaturesPerView & featuresPerView,
             std::mt19937 &randomNumberGenerator,
-            std::set<IndexT> viewIds
+            const std::set<IndexT> & viewIds,
+            sfmData::Landmark & result
         )
 {
     feature::EImageDescriberType descType = track.descType;
@@ -287,12 +308,13 @@ bool SfmTriangulation::processTrack(
     std::vector<Vec2> observations;
     std::vector<std::shared_ptr<camera::IntrinsicBase>> intrinsics;
     std::vector<Eigen::Matrix4d> poses;
+    std::vector<IndexT> indexedViewIds;
 
     for (auto viewId : viewIds)
     {   
         //Retrieve pose and feature coordinates for this observation
         const sfmData::View & view = sfmData.getView(viewId);
-        const std::shared_ptr<camera::IntrinsicBase> intrinsic = sfmData.getIntrinsicsharedPtr(viewId);
+        const std::shared_ptr<camera::IntrinsicBase> intrinsic = sfmData.getIntrinsicsharedPtr(view.getIntrinsicId());
         const Eigen::Matrix4d pose = sfmData.getPose(view).getTransform().getHomogeneous();
 
         std::size_t featureId = track.featPerView.at(viewId);
@@ -306,14 +328,44 @@ bool SfmTriangulation::processTrack(
         observations.push_back(coords);
         intrinsics.push_back(intrinsic);
         poses.push_back(pose);
+        
+        indexedViewIds.push_back(viewId);
     }
+
+
 
     robustEstimation::MatrixModel<Vec4> model;
     std::vector<std::size_t> inliers;
     robustEstimation::ScoreEvaluator<TriangulationSphericalKernel> scorer(8.0);
     TriangulationSphericalKernel kernel(observations, poses, intrinsics);
+
     model = robustEstimation::LO_RANSAC(kernel, scorer, randomNumberGenerator, &inliers);
     Vec4 X = model.getMatrix();
+
+    Vec3 X_euclidean;
+    homogeneousToEuclidean(X, X_euclidean); 
+
+    //Create landmark from result
+    result.X = X_euclidean;
+    result.descType = track.descType;
+
+    for (const std::size_t & i : inliers)
+    {   
+        //Inlier to view index
+        IndexT viewId = indexedViewIds[i];
+        
+        sfmData::Observation & o = result.observations[viewId];
+        
+        //Retrieve observation data
+        std::size_t featureId = track.featPerView.at(viewId);
+        const auto & viewFeatures = featuresPerView.getFeaturesPerDesc(viewId);
+        const auto & viewFeaturesDesc = viewFeatures.at(descType);
+        const auto & pt = viewFeaturesDesc[featureId];
+
+        o.id_feat = featureId;
+        o.scale = pt.scale();
+        o.x = pt.coords().cast<double>();
+    }
 
     return true;
 }
